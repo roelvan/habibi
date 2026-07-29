@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#FBF5EC" />
+    <meta name="color-scheme" content="light" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Habibi" />
+    <meta name="description" content="A private, offline-first habit tracker." />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="icon" href="./icons/icon-192.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Habibi</title>
+  </head>
+  <body>
+    <main id="app" aria-label="Habibi habit tracker">
+      <header class="header">
+        <div class="title-row">
+          <div class="title-block">
+            <button id="year-button" class="year-button" type="button" aria-haspopup="menu" aria-expanded="false">
+              <span id="year-title"></span>
+              <svg class="tiny-chevron" viewBox="0 0 12 8" aria-hidden="true">
+                <path d="m1.5 1.5 4.5 4 4.5-4" />
+              </svg>
+            </button>
+            <p id="stats-line" class="stats-line"></p>
+          </div>
+          <button id="settings-button" class="settings-button" type="button" aria-label="Settings" aria-haspopup="menu" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.03-.66-.08-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.2 7.2 0 0 0-1.69-.98l-.38-2.65A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.49.49 0 0 0 .12.64l2.11 1.65c-.04.32-.08.66-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.38.31.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z" />
+            </svg>
+          </button>
+        </div>
+
+        <nav id="habit-picker" class="habit-picker" aria-label="Habits"></nav>
+      </header>
+
+      <div class="weekday-row" aria-hidden="true">
+        <span class="month-spacer"></span>
+        <span>M</span><span>T</span><span>W</span><span>T</span>
+        <span>F</span><span>S</span><span>S</span>
+      </div>
+
+      <section id="calendar-scroll" class="calendar-scroll" aria-label="Year calendar">
+        <div id="calendar-grid" class="calendar-grid"></div>
+      </section>
+
+      <div id="popover-layer" class="popover-layer" hidden></div>
+      <div id="modal-layer" class="modal-layer" hidden></div>
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      <input id="import-input" type="file" accept="application/json,.json" hidden />
+    </main>
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>
