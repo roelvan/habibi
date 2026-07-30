@@ -3,6 +3,8 @@
 This folder is a dependency-free, offline-first web version of the SwiftUI app.
 It can be deployed as-is to any static host.
 
+Production: <https://habibi.vaneyghen.be/>
+
 ## Local preview
 
 From the repository root:

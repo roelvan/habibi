@@ -1,4 +1,4 @@
-const CACHE_NAME = "habibi-shell-v1.1";
+const CACHE_NAME = "habibi-shell-v1.4";
 const APP_SHELL = [
   "./",
   "./index.html",

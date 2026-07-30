@@ -349,7 +349,7 @@ class HabibiApp {
           : lastDoneDaysAgo === 1
             ? "yesterday"
             : `${lastDoneDaysAgo} days ago`;
-    const text = `${this.model.activeHabit.name} · ${lastDone} · ${weekDoneTotal} this week · ${yearDoneTotal} this year`;
+    const text = `${lastDone} · ${weekDoneTotal} this week · ${yearDoneTotal} this year`;
     this.statsLine.textContent = text;
     this.statsLine.title = text;
   }

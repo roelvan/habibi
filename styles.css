@@ -33,13 +33,18 @@
 html,
 body {
   width: 100%;
-  height: 100%;
   margin: 0;
+  overflow: hidden;
   overscroll-behavior: none;
+}
+
+html {
+  height: 100%;
 }
 
 body {
   display: flex;
+  height: 100vh;
   justify-content: center;
   background: #efe6d8;
 }
@@ -54,16 +59,16 @@ button {
 }
 
 #app {
-  position: relative;
+  position: fixed;
+  inset: 0;
   display: flex;
-  width: 100%;
+  width: 100vw;
   max-width: 430px;
   height: 100vh;
-  height: 100lvh;
   flex-direction: column;
+  margin: 0 auto;
   overflow: hidden;
   padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
   background: var(--background);
   isolation: isolate;
 }
@@ -272,7 +277,8 @@ button {
   flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: calc(2px * var(--s)) var(--side) calc(20px * var(--s));
+  padding: calc(2px * var(--s)) var(--side)
+    calc(20px * var(--s) + env(safe-area-inset-bottom));
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
