@@ -368,17 +368,22 @@ export class HabitTrackerModel {
   stats() {
     const habitYears = this.state.counts[this.activeHabitID] ?? {};
     const currentDays = habitYears[this.currentYear] ?? {};
-    const doneDays = Object.keys(currentDays)
-      .map(Number)
-      .filter((day) => currentDays[day] > 0);
+    const completions = Object.entries(currentDays)
+      .map(([day, count]) => ({ day: Number(day), count }))
+      .filter(({ count }) => count > 0);
+    const doneDays = completions.map(({ day }) => day);
 
     const currentLayout = createYearLayout(this.currentYear);
     const weekStart =
       this.currentDayIndex -
       ((currentLayout.leadingEmpty + this.currentDayIndex) % 7);
-    const weekDoneTotal = doneDays.filter(
-      (day) => day >= weekStart && day <= weekStart + 6,
-    ).length;
+    const weekDoneTotal = completions
+      .filter(({ day }) => day >= weekStart && day <= weekStart + 6)
+      .reduce((total, { count }) => total + count, 0);
+    const yearDoneTotal = completions.reduce(
+      (total, { count }) => total + count,
+      0,
+    );
 
     const latest = doneDays
       .filter((day) => day <= this.currentDayIndex)
@@ -411,7 +416,7 @@ export class HabitTrackerModel {
 
     return {
       weekDoneTotal,
-      yearDoneTotal: doneDays.length,
+      yearDoneTotal,
       lastDoneDaysAgo,
     };
   }

@@ -93,7 +93,7 @@ test("increment, clear, habit selection, and year selection are isolated", () =>
   assert.equal(model.count(364), 0);
 });
 
-test("stats match the Swift behavior for the current week and year", () => {
+test("stats total every occurrence for the current week and year", () => {
   const state = {
     habits: [{ id: HABIT_ID, name: "Abs" }],
     counts: {},
@@ -108,10 +108,11 @@ test("stats match the Swift behavior for the current week and year", () => {
   });
   model.increment(193);
   model.increment(193);
+  model.increment(193);
   model.increment(191);
   assert.deepEqual(model.stats(), {
-    weekDoneTotal: 1,
-    yearDoneTotal: 2,
+    weekDoneTotal: 3,
+    yearDoneTotal: 4,
     lastDoneDaysAgo: 0,
   });
   model.clear(193);
