@@ -2,6 +2,7 @@ import {
   BackupError,
   HabitTrackerModel,
 } from "./model.mjs";
+import { CompletionAudio } from "./completion-audio.mjs";
 
 const STORAGE_KEY = "habibi-backup-v1";
 const CONFETTI_COLORS = [
@@ -147,7 +148,9 @@ class HabibiApp {
     this.popoverLayer = document.querySelector("#popover-layer");
     this.modalLayer = document.querySelector("#modal-layer");
     this.celebrationCanvas = document.querySelector("#celebration-canvas");
-    this.completionSound = document.querySelector("#completion-sound");
+    this.completionAudio = new CompletionAudio(
+      document.querySelector("#completion-sound"),
+    );
     this.importInput = document.querySelector("#import-input");
     this.toastElement = document.querySelector("#toast");
 
@@ -279,9 +282,15 @@ class HabibiApp {
     });
 
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) this.#refreshCurrentDate();
+      if (!document.hidden) {
+        this.completionAudio.resetAfterBackground();
+        this.#refreshCurrentDate();
+      }
     });
-    window.addEventListener("pageshow", () => this.#refreshCurrentDate());
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted) this.completionAudio.resetAfterBackground();
+      this.#refreshCurrentDate();
+    });
     window.addEventListener("focus", () => this.#refreshCurrentDate());
 
     document.addEventListener(
@@ -350,21 +359,9 @@ class HabibiApp {
   }
 
   #celebrate(cell) {
-    this.#playCompletionSound();
+    this.completionAudio.play();
     if (!this.usesIOSHapticSwitch) navigator.vibrate?.(16);
     this.#launchConfetti(cell);
-  }
-
-  #playCompletionSound() {
-    try {
-      this.completionSound.pause();
-      this.completionSound.currentTime = 0;
-      this.completionSound.play().catch((error) => {
-        console.warn("Completion sound could not play", error);
-      });
-    } catch {
-      // Completion still succeeds when a browser blocks or lacks audio output.
-    }
   }
 
   #launchConfetti(cell) {
