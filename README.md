@@ -1,7 +1,7 @@
 # Habibi PWA
 
-This folder is a dependency-free, offline-first web version of the SwiftUI app.
-It can be deployed as-is to any static host.
+This repository contains a dependency-free, offline-first habit-tracking PWA.
+It can be deployed to any static host.
 
 Production: <https://habibi.vaneyghen.be/>
 
@@ -10,7 +10,7 @@ Production: <https://habibi.vaneyghen.be/>
 From the repository root:
 
 ```sh
-python3 -m http.server 4173 --directory web
+python3 -m http.server 4173
 ```
 
 Then open <http://localhost:4173>.
@@ -18,13 +18,17 @@ Then open <http://localhost:4173>.
 ## Tests
 
 ```sh
-node --test web/tests/model.test.mjs
+npm test
 ```
 
 ## Deploy
 
-Publish the contents of `web/` at an HTTPS URL. No build command is needed. The
-site root/output directory is `web`.
+Create and publish the production bundle with:
+
+```sh
+npm run build
+wrangler pages deploy dist/client --project-name habibi-habit-tracker-roel
+```
 
 On iPhone, open that URL in Safari, tap **Share**, choose **Add to Home Screen**,
 and tap **Add**. Habibi then opens as a standalone app and works offline.

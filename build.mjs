@@ -25,4 +25,4 @@ await cp(path.join(project, "icons"), path.join(client, "icons"), {
   recursive: true,
 });
 
-console.log("Habibi production bundle created in web/dist");
+console.log("Habibi production bundle created in dist/client");
