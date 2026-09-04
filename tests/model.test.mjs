@@ -123,6 +123,49 @@ test("stats total every occurrence for the current week and year", () => {
   });
 });
 
+test("refreshing the date moves today and stats forward", () => {
+  const state = {
+    habits: [{ id: HABIT_ID, name: "Abs" }],
+    counts: {},
+    activeHabitID: HABIT_ID,
+    years: [2026],
+  };
+  const model = new HabitTrackerModel({ state, now: JUL_13_2026 });
+  model.increment(193);
+
+  assert.equal(model.refreshCurrentDate(new Date(2026, 6, 14, 12)), true);
+  assert.equal(model.todayIndex(), 194);
+  assert.deepEqual(model.stats(), {
+    weekDoneTotal: 1,
+    yearDoneTotal: 1,
+    lastDoneDaysAgo: 1,
+  });
+});
+
+test("refreshing the date follows a new year", () => {
+  const state = {
+    habits: [{ id: HABIT_ID, name: "Abs" }],
+    counts: {},
+    activeHabitID: HABIT_ID,
+    years: [2026],
+  };
+  const model = new HabitTrackerModel({
+    state,
+    now: new Date(2026, 11, 31, 12),
+  });
+  model.increment(364);
+
+  assert.equal(model.refreshCurrentDate(new Date(2027, 0, 1, 12)), true);
+  assert.equal(model.year, 2027);
+  assert.deepEqual(model.years, [2026, 2027]);
+  assert.equal(model.todayIndex(), 0);
+  assert.deepEqual(model.stats(), {
+    weekDoneTotal: 0,
+    yearDoneTotal: 0,
+    lastDoneDaysAgo: 1,
+  });
+});
+
 test("invalid imports fail without producing partial state", () => {
   assert.throws(() => decodeBackup("junk", 2026), BackupError);
   assert.throws(

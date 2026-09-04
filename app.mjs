@@ -254,6 +254,12 @@ class HabibiApp {
       else this.closePopover();
     });
 
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) this.#refreshCurrentDate();
+    });
+    window.addEventListener("pageshow", () => this.#refreshCurrentDate());
+    window.addEventListener("focus", () => this.#refreshCurrentDate());
+
     document.addEventListener(
       "click",
       () => {
@@ -325,6 +331,15 @@ class HabibiApp {
 
   #persist() {
     this.storage.save(this.model.toBackupJSON());
+  }
+
+  #refreshCurrentDate() {
+    if (!this.model.refreshCurrentDate()) return;
+    this.#persist();
+    this.renderTitle();
+    this.renderStats();
+    this.renderGrid();
+    requestAnimationFrame(() => this.scrollToToday());
   }
 
   renderAll({ scroll = false } = {}) {

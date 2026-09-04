@@ -323,6 +323,30 @@ export class HabitTrackerModel {
     return true;
   }
 
+  refreshCurrentDate(now = new Date()) {
+    const nextNow = new Date(now);
+    const nextCurrentYear = nextNow.getFullYear();
+    const nextCurrentDayIndex = dayIndexForDate(nextNow);
+    if (
+      nextCurrentYear === this.currentYear &&
+      nextCurrentDayIndex === this.currentDayIndex
+    ) {
+      return false;
+    }
+
+    const wasShowingCurrentYear = this.year === this.currentYear;
+    this.now = nextNow;
+    this.currentYear = nextCurrentYear;
+    this.currentDayIndex = nextCurrentDayIndex;
+    this.state.years = normalizeYears(this.state.years, nextCurrentYear);
+
+    if (wasShowingCurrentYear && this.year !== nextCurrentYear) {
+      this.year = nextCurrentYear;
+      this.layout = createYearLayout(nextCurrentYear);
+    }
+    return true;
+  }
+
   addNextYear() {
     const next = Math.max(...this.years) + 1;
     if (next > 9999) return null;
