@@ -24,5 +24,8 @@ for (const file of [
 await cp(path.join(project, "icons"), path.join(client, "icons"), {
   recursive: true,
 });
+await cp(path.join(project, "assets"), path.join(client, "assets"), {
+  recursive: true,
+});
 
 console.log("Habibi production bundle created in dist/client");

@@ -323,6 +323,40 @@ button {
   -webkit-touch-callout: none;
 }
 
+.day-cell-button {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.day-cell-button:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 2px;
+}
+
+.ios-haptic-switch {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  clip-path: inset(0 round var(--radius));
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+}
+
 .day-cell.weekend {
   background: var(--cell-weekend);
 }
@@ -371,6 +405,15 @@ button {
   font-size: calc(15px * var(--s));
   font-weight: 800;
   line-height: 1;
+}
+
+.celebration-canvas {
+  position: absolute;
+  z-index: 40;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .popover-layer,

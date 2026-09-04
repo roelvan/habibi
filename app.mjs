@@ -4,6 +4,21 @@ import {
 } from "./model.mjs";
 
 const STORAGE_KEY = "habibi-backup-v1";
+const CONFETTI_COLORS = [
+  "#ec7c57",
+  "#f3b84b",
+  "#7cad78",
+  "#61a7d8",
+  "#b980c4",
+  "#fff0d2",
+];
+
+function isIOSDevice() {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
 
 const ICONS = {
   plus: `
@@ -117,7 +132,9 @@ class HabibiApp {
     this.longPress = null;
     this.suppressedClickTarget = null;
     this.toastTimer = null;
+    this.confettiFrame = null;
     this.persistenceRequested = false;
+    this.usesIOSHapticSwitch = isIOSDevice();
 
     this.app = document.querySelector("#app");
     this.yearButton = document.querySelector("#year-button");
@@ -129,6 +146,8 @@ class HabibiApp {
     this.calendarGrid = document.querySelector("#calendar-grid");
     this.popoverLayer = document.querySelector("#popover-layer");
     this.modalLayer = document.querySelector("#modal-layer");
+    this.celebrationCanvas = document.querySelector("#celebration-canvas");
+    this.completionSound = document.querySelector("#completion-sound");
     this.importInput = document.querySelector("#import-input");
     this.toastElement = document.querySelector("#toast");
 
@@ -182,10 +201,16 @@ class HabibiApp {
       const cell = event.target.closest(".day-cell");
       if (!cell || this.#consumeSuppressedClick(cell)) return;
       const day = Number(cell.dataset.day);
+      const wasEmpty = this.model.count(day) === 0;
+      const usedIOSHapticSwitch = event.target.closest(".ios-haptic-switch");
       if (this.model.increment(day)) {
-        this.#lightHaptic();
+        if (wasEmpty) this.#celebrate(cell);
         this.#persist();
-        this.updateCell(day);
+        if (usedIOSHapticSwitch) {
+          requestAnimationFrame(() => this.updateCell(day));
+        } else {
+          this.updateCell(day);
+        }
         this.renderStats();
       }
     });
@@ -195,7 +220,6 @@ class HabibiApp {
       this.#beginLongPress(event, cell, () => {
         const day = Number(cell.dataset.day);
         if (this.model.clear(day)) {
-          this.#lightHaptic();
           this.#persist();
           this.updateCell(day);
           this.renderStats();
@@ -325,8 +349,103 @@ class HabibiApp {
     return true;
   }
 
-  #lightHaptic() {
-    navigator.vibrate?.(8);
+  #celebrate(cell) {
+    this.#playCompletionSound();
+    if (!this.usesIOSHapticSwitch) navigator.vibrate?.(16);
+    this.#launchConfetti(cell);
+  }
+
+  #playCompletionSound() {
+    try {
+      this.completionSound.pause();
+      this.completionSound.currentTime = 0;
+      this.completionSound.play().catch((error) => {
+        console.warn("Completion sound could not play", error);
+      });
+    } catch {
+      // Completion still succeeds when a browser blocks or lacks audio output.
+    }
+  }
+
+  #launchConfetti(cell) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    if (this.confettiFrame !== null) {
+      cancelAnimationFrame(this.confettiFrame);
+      this.confettiFrame = null;
+    }
+
+    const canvas = this.celebrationCanvas;
+    const canvasRect = canvas.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(canvasRect.width * pixelRatio);
+    canvas.height = Math.round(canvasRect.height * pixelRatio);
+
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+    const scale = Math.max(canvasRect.width / 390, 0.8);
+    const originX = cellRect.left + cellRect.width / 2 - canvasRect.left;
+    const originY = cellRect.top + cellRect.height / 2 - canvasRect.top;
+    const pieces = Array.from({ length: 72 }, (_, index) => {
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * 2.25;
+      const speed = (5.2 + Math.random() * 5.4) * scale;
+      return {
+        x: originX,
+        y: originY,
+        velocityX: Math.cos(angle) * speed,
+        velocityY: Math.sin(angle) * speed,
+        rotation: Math.random() * Math.PI,
+        rotationSpeed: (Math.random() - 0.5) * 0.35,
+        width: (5 + Math.random() * 5) * scale,
+        height: (3 + Math.random() * 4) * scale,
+        color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],
+      };
+    });
+
+    const startedAt = performance.now();
+    let previousFrame = startedAt;
+    const draw = (now) => {
+      const elapsed = now - startedAt;
+      const step = Math.min((now - previousFrame) / (1000 / 60), 2.5);
+      previousFrame = now;
+      context.clearRect(0, 0, canvasRect.width, canvasRect.height);
+      context.globalAlpha = Math.max(
+        0,
+        Math.min(1, (1_150 - elapsed) / 350),
+      );
+
+      for (const piece of pieces) {
+        piece.velocityY += 0.2 * scale * step;
+        piece.x += piece.velocityX * step;
+        piece.y += piece.velocityY * step;
+        piece.rotation += piece.rotationSpeed * step;
+
+        context.save();
+        context.translate(piece.x, piece.y);
+        context.rotate(piece.rotation);
+        context.fillStyle = piece.color;
+        context.fillRect(
+          -piece.width / 2,
+          -piece.height / 2,
+          piece.width,
+          piece.height,
+        );
+        context.restore();
+      }
+
+      if (elapsed < 1_150) {
+        this.confettiFrame = requestAnimationFrame(draw);
+      } else {
+        context.clearRect(0, 0, canvasRect.width, canvasRect.height);
+        context.globalAlpha = 1;
+        this.confettiFrame = null;
+      }
+    };
+
+    this.confettiFrame = requestAnimationFrame(draw);
   }
 
   #persist() {
@@ -417,18 +536,22 @@ class HabibiApp {
           continue;
         }
 
-        const cell = document.createElement("button");
-        cell.type = "button";
+        const cell = document.createElement("div");
         cell.className = "day-cell";
         if (column >= 5) cell.classList.add("weekend");
         if (day === today) cell.classList.add("today");
         cell.dataset.day = String(day);
         cell.title = this.model.layout.dateLabel(day);
 
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "day-cell-button";
+
         const number = document.createElement("span");
         number.className = "day-number";
         number.textContent = String(this.model.layout.dayOfMonth(day));
-        cell.append(number);
+        button.append(number);
+        cell.append(button);
         row.append(cell);
         this.#setCellAppearance(cell, day);
       }
@@ -446,13 +569,26 @@ class HabibiApp {
       const countLabel = document.createElement("span");
       countLabel.className = "completion-count";
       countLabel.textContent = String(count);
-      cell.append(countLabel);
+      cell.querySelector(".day-cell-button").append(countLabel);
     }
     const status = count === 0 ? "not completed" : `${count} completions`;
-    cell.setAttribute(
+    cell.querySelector(".day-cell-button").setAttribute(
       "aria-label",
       `${this.model.layout.dateLabel(day)}, ${status}. Tap to add; hold to clear.`,
     );
+
+    const hapticSwitch = cell.querySelector(".ios-haptic-switch");
+    if (this.usesIOSHapticSwitch && count === 0 && !hapticSwitch) {
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.className = "ios-haptic-switch";
+      input.setAttribute("switch", "");
+      input.setAttribute("aria-hidden", "true");
+      input.tabIndex = -1;
+      cell.append(input);
+    } else if ((!this.usesIOSHapticSwitch || count > 0) && hapticSwitch) {
+      hapticSwitch.remove();
+    }
   }
 
   updateCell(day) {

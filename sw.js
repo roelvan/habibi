@@ -1,10 +1,11 @@
-const CACHE_NAME = "habibi-shell-v1.6";
+const CACHE_NAME = "habibi-shell-v1.7";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.mjs",
   "./model.mjs",
+  "./assets/sounds/completion.mp3",
   "./manifest.webmanifest",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
