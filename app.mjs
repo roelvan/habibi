@@ -14,13 +14,6 @@ const CONFETTI_COLORS = [
   "#fff0d2",
 ];
 
-function isIOSDevice() {
-  return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  );
-}
-
 const ICONS = {
   plus: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -135,7 +128,6 @@ class HabibiApp {
     this.toastTimer = null;
     this.confettiFrame = null;
     this.persistenceRequested = false;
-    this.usesIOSHapticSwitch = isIOSDevice();
 
     this.app = document.querySelector("#app");
     this.yearButton = document.querySelector("#year-button");
@@ -205,15 +197,10 @@ class HabibiApp {
       if (!cell || this.#consumeSuppressedClick(cell)) return;
       const day = Number(cell.dataset.day);
       const wasEmpty = this.model.count(day) === 0;
-      const usedIOSHapticSwitch = event.target.closest(".ios-haptic-switch");
       if (this.model.increment(day)) {
         if (wasEmpty) this.#celebrate(cell);
         this.#persist();
-        if (usedIOSHapticSwitch) {
-          requestAnimationFrame(() => this.updateCell(day));
-        } else {
-          this.updateCell(day);
-        }
+        this.updateCell(day);
         this.renderStats();
       }
     });
@@ -232,7 +219,9 @@ class HabibiApp {
     this.calendarGrid.addEventListener("pointermove", (event) =>
       this.#moveLongPress(event),
     );
-    this.calendarGrid.addEventListener("pointerup", () => this.#endLongPress());
+    this.calendarGrid.addEventListener("pointerup", (event) =>
+      this.#endLongPress(event, { suppressMovedClick: true }),
+    );
     this.calendarGrid.addEventListener("pointercancel", () =>
       this.#endLongPress(),
     );
@@ -326,10 +315,15 @@ class HabibiApp {
       target,
       startX: event.clientX,
       startY: event.clientY,
+      moved: false,
+      triggered: false,
       timer: window.setTimeout(() => {
-        this.suppressedClickTarget = target;
+        if (!this.longPress || this.longPress.pointerId !== event.pointerId) {
+          return;
+        }
+        this.longPress.triggered = true;
+        this.longPress.timer = null;
         callback();
-        this.longPress = null;
       }, 520),
     };
   }
@@ -342,14 +336,26 @@ class HabibiApp {
         event.clientY - this.longPress.startY,
       ) > 12
     ) {
-      this.#endLongPress();
+      clearTimeout(this.longPress.timer);
+      this.longPress.timer = null;
+      this.longPress.moved = true;
     }
   }
 
-  #endLongPress() {
+  #endLongPress(event = null, { suppressMovedClick = false } = {}) {
     if (!this.longPress) return;
+    if (event && event.pointerId !== this.longPress.pointerId) return;
+    const { moved, target, triggered } = this.longPress;
     clearTimeout(this.longPress.timer);
     this.longPress = null;
+    if (triggered || (suppressMovedClick && moved)) {
+      this.suppressedClickTarget = target;
+      window.setTimeout(() => {
+        if (this.suppressedClickTarget === target) {
+          this.suppressedClickTarget = null;
+        }
+      }, 500);
+    }
   }
 
   #consumeSuppressedClick(target) {
@@ -360,7 +366,7 @@ class HabibiApp {
 
   #celebrate(cell) {
     this.completionAudio.play();
-    if (!this.usesIOSHapticSwitch) navigator.vibrate?.(16);
+    navigator.vibrate?.(16);
     this.#launchConfetti(cell);
   }
 
@@ -573,19 +579,6 @@ class HabibiApp {
       "aria-label",
       `${this.model.layout.dateLabel(day)}, ${status}. Tap to add; hold to clear.`,
     );
-
-    const hapticSwitch = cell.querySelector(".ios-haptic-switch");
-    if (this.usesIOSHapticSwitch && count === 0 && !hapticSwitch) {
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.className = "ios-haptic-switch";
-      input.setAttribute("switch", "");
-      input.setAttribute("aria-hidden", "true");
-      input.tabIndex = -1;
-      cell.append(input);
-    } else if ((!this.usesIOSHapticSwitch || count > 0) && hapticSwitch) {
-      hapticSwitch.remove();
-    }
   }
 
   updateCell(day) {
