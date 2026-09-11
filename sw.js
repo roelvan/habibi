@@ -1,9 +1,9 @@
-const CACHE_NAME = "habibi-shell-v1.15";
+const CACHE_NAME = "habibi-shell-v1.16";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=1.15",
-  "./app.mjs?v=1.15",
+  "./styles.css?v=1.16",
+  "./app.mjs?v=1.16",
   "./completion-audio.mjs",
   "./lucide-icons.mjs?v=1.14",
   "./model.mjs?v=1.14",
