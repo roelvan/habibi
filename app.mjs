@@ -1,7 +1,8 @@
+import { icons } from "./lucide-icons.mjs?v=1.14";
 import {
   BackupError,
   HabitTrackerModel,
-} from "./model.mjs";
+} from "./model.mjs?v=1.14";
 import { CompletionAudio } from "./completion-audio.mjs";
 
 const STORAGE_KEY = "habibi-backup-v1";
@@ -15,30 +16,12 @@ const CONFETTI_COLORS = [
 ];
 
 const ICONS = {
-  plus: `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 5v14M5 12h14" />
-    </svg>`,
-  export: `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3v12m0-12 4 4m-4-4L8 7M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
-    </svg>`,
-  import: `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 15V3m0 12 4-4m-4 4-4-4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
-    </svg>`,
-  install: `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
-    </svg>`,
-  pencil: `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m4 20 4.5-1L19 8.5a2.1 2.1 0 0 0-3-3L5.5 16 4 20Zm10.5-13 3 3" />
-    </svg>`,
-  trash: `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6" />
-    </svg>`,
+  plus: icons.plus,
+  export: icons.upload,
+  import: icons.download,
+  install: icons.smartphone,
+  pencil: icons.pencil,
+  trash: icons["trash-2"],
 };
 
 class DurableStore {
@@ -130,6 +113,9 @@ class HabibiApp {
     this.persistenceRequested = false;
 
     this.app = document.querySelector("#app");
+    for (const placeholder of document.querySelectorAll("[data-icon]")) {
+      placeholder.innerHTML = icons[placeholder.dataset.icon];
+    }
     this.yearButton = document.querySelector("#year-button");
     this.yearTitle = document.querySelector("#year-title");
     this.statsLine = document.querySelector("#stats-line");
@@ -146,13 +132,22 @@ class HabibiApp {
     this.importInput = document.querySelector("#import-input");
     this.toastElement = document.querySelector("#toast");
 
+    this.overviewPage = document.querySelector("#overview-page");
     this.#bindEvents();
     this.#updateScale();
     this.renderAll({ scroll: true });
+    this.renderPage();
     new ResizeObserver(() => this.#updateScale()).observe(this.app);
   }
 
   #bindEvents() {
+    document.querySelector("#overview-button").addEventListener("click", () => {
+      location.hash = "overview";
+    });
+    document.querySelector("#overview-back").addEventListener("click", () => {
+      location.hash = "";
+    });
+    window.addEventListener("hashchange", () => this.renderPage());
     this.yearButton.addEventListener("click", () => this.showYearMenu());
     this.settingsButton.addEventListener("click", () => this.showSettingsMenu());
     this.habitPicker.addEventListener("click", (event) => {
@@ -469,7 +464,55 @@ class HabibiApp {
     this.renderStats();
     this.renderHabits();
     this.renderGrid();
+    if (!this.overviewPage.hidden) this.renderOverview();
     if (scroll) requestAnimationFrame(() => this.scrollToToday());
+  }
+
+  renderPage() {
+    const overview = location.hash === "#overview";
+    this.closePopover();
+    this.overviewPage.hidden = !overview;
+    document.querySelector(".header").hidden = overview;
+    document.querySelector(".weekday-row").hidden = overview;
+    this.calendarScroll.hidden = overview;
+    if (overview) {
+      this.model.refreshCurrentDate();
+      this.renderOverview();
+      document.querySelector("#overview-title").focus();
+    } else {
+      this.renderAll({ scroll: true });
+      document.querySelector("#overview-button").focus({ preventScroll: true });
+    }
+  }
+
+  renderOverview() {
+    const list = document.querySelector("#overview-list");
+    list.replaceChildren();
+    for (const habit of this.model.neglectedHabits()) {
+      const row = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      const name = document.createElement("span");
+      name.textContent = habit.name;
+      const lastDone = document.createElement("span");
+      lastDone.className = "overview-last-done";
+      lastDone.textContent = habit.daysAgo === null ? "Never done"
+        : habit.daysAgo === 0 ? "Today"
+        : habit.daysAgo === 1 ? "Yesterday" : `${habit.daysAgo} days ago`;
+      button.append(name, lastDone);
+      button.addEventListener("click", () => {
+        this.model.selectHabit(habit.id);
+        this.#persist();
+        location.hash = "";
+      });
+      row.append(button);
+      list.append(row);
+    }
+    if (!list.children.length) {
+      const empty = document.createElement("li");
+      empty.textContent = "No good habits yet. Set a habit’s type to Good to see it here.";
+      list.append(empty);
+    }
   }
 
   renderTitle() {
@@ -502,7 +545,7 @@ class HabibiApp {
       button.dataset.habitId = habit.id;
       button.textContent = habit.name;
       button.setAttribute("aria-pressed", String(habit.id === this.model.activeHabitID));
-      button.title = `${habit.name} — hold to rename or delete`;
+      button.title = `${habit.name} — hold to edit or delete`;
       if (habit.id === this.model.activeHabitID) button.classList.add("active");
       this.habitPicker.append(button);
     }
@@ -618,7 +661,7 @@ class HabibiApp {
       item.dataset.year = String(year);
       const marker = document.createElement("span");
       marker.className = "check-spacer";
-      marker.textContent = year === this.model.year ? "✓" : "";
+      marker.innerHTML = year === this.model.year ? icons.check : "";
       const text = document.createElement("span");
       text.textContent = String(year);
       item.append(marker, text);
@@ -708,7 +751,7 @@ class HabibiApp {
     label.textContent = habit.name;
     container.append(label);
 
-    const rename = this.#menuItem("Rename", ICONS.pencil);
+    const rename = this.#menuItem("Edit habit", ICONS.pencil);
     rename.addEventListener("click", () => {
       this.closePopover();
       this.showHabitForm(habit);
@@ -774,7 +817,7 @@ class HabibiApp {
     const editing = Boolean(habit);
     const sheet = this.#createSheet();
     const title = document.createElement("h2");
-    title.textContent = editing ? "Rename Habit" : "New Habit";
+    title.textContent = editing ? "Edit Habit" : "New Habit";
     const copy = document.createElement("p");
     copy.textContent = editing
       ? "Give this habit a name that feels like yours."
@@ -787,16 +830,26 @@ class HabibiApp {
     input.maxLength = 40;
     input.value = habit?.name ?? "";
 
+    const typeLabel = document.createElement("label");
+    typeLabel.className = "habit-type-label";
+    typeLabel.textContent = "Habit type";
+    const typeSelect = document.createElement("select");
+    typeSelect.className = "text-input";
+    typeSelect.innerHTML = '<option value="good">Good</option><option value="bad">Bad</option>';
+    typeSelect.value = habit?.type ?? "good";
+    typeLabel.append(typeSelect);
+
     const actions = this.#createActions("Cancel", editing ? "Save" : "Add");
     actions.cancel.addEventListener("click", () => this.closeModal());
     const submit = () => {
       const changed = editing
         ? this.model.renameHabit(habit.id, input.value)
-        : this.model.addHabit(input.value);
+        : this.model.addHabit(input.value, typeSelect.value);
       if (!changed) {
         input.focus();
         return;
       }
+      if (editing) this.model.setHabitType(habit.id, typeSelect.value);
       this.#persist();
       this.closeModal();
       this.renderHabits();
@@ -808,7 +861,7 @@ class HabibiApp {
       if (event.key === "Enter") submit();
     });
 
-    sheet.append(title, copy, input, actions.element);
+    sheet.append(title, copy, input, typeLabel, actions.element);
     this.openModal(sheet);
     window.setTimeout(() => {
       input.focus();
@@ -827,6 +880,7 @@ class HabibiApp {
     actions.cancel.addEventListener("click", () => this.closeModal());
     actions.primary.addEventListener("click", () => {
       if (!this.model.deleteHabit(habit.id)) return;
+      if (editing) this.model.setHabitType(habit.id, typeSelect.value);
       this.#persist();
       this.closeModal();
       this.renderHabits();

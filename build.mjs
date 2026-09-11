@@ -13,6 +13,7 @@ for (const file of [
   "index.html",
   "styles.css",
   "app.mjs",
+  "lucide-icons.mjs",
   "completion-audio.mjs",
   "model.mjs",
   "manifest.webmanifest",

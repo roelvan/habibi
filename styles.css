@@ -151,7 +151,8 @@ button {
 .settings-button svg {
   width: calc(17px * var(--s));
   height: calc(17px * var(--s));
-  fill: var(--pill-text);
+  fill: none;
+  stroke: var(--pill-text);
 }
 
 .settings-button:active,
@@ -241,7 +242,7 @@ button {
   height: calc(15px * var(--s));
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.6;
+  stroke-width: 2;
   stroke-linecap: round;
 }
 
@@ -698,3 +699,31 @@ button {
     animation-duration: 0.01ms !important;
   }
 }
+
+[hidden] { display: none !important; }
+.header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.header-actions .settings-button { position: static; }
+.habit-type-label { display: grid; gap: 8px; margin-top: 16px; }
+select { font: inherit; color: inherit; }
+.overview-page { overflow-y: auto; padding: 24px var(--side); padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.overview-page h1 { font-size: 26px; margin: 24px 0 10px; }
+.overview-copy { color: var(--pill-text); line-height: 1.5; }
+.overview-list { list-style: none; padding: 0; margin-top: 24px; }
+.overview-list li { margin-bottom: 10px; }
+.overview-list button { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; border: 0; border-radius: 14px; padding: 18px; background: var(--pill-bg); text-align: left; cursor: pointer; }
+.overview-list button > span:first-child { overflow-wrap: anywhere; }
+.overview-last-done { color: var(--accent-dark); font-size: 14px; flex-shrink: 0; }
+
+/* Suppress native focus rings across all app controls. */
+:focus, :focus-visible { outline: none !important; }
+
+[data-icon] { display: inline-flex; align-items: center; justify-content: center; }
+[data-icon] svg { display: block; flex-shrink: 0; }
+.tiny-chevron { width: calc(14px * var(--s)); height: calc(14px * var(--s)); }
+.tiny-chevron svg { width: 100%; height: 100%; stroke: var(--muted); }
+#overview-back { display: inline-flex; align-items: center; gap: 8px; }
+#overview-back svg { width: 18px; height: 18px; }
+.overview-page h1 { font-size: calc(26px * var(--s)); font-weight: 900; letter-spacing: -0.5px; }
+.overview-copy { font-size: calc(14px * var(--s)); font-weight: 650; }
+.overview-list button { font-family: inherit; font-size: calc(15px * var(--s)); font-weight: 800; }
+.overview-last-done { font-size: calc(14px * var(--s)); font-weight: 700; }

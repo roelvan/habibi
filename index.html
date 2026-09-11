@@ -24,17 +24,18 @@
           <div class="title-block">
             <button id="year-button" class="year-button" type="button" aria-haspopup="menu" aria-expanded="false">
               <span id="year-title"></span>
-              <svg class="tiny-chevron" viewBox="0 0 12 8" aria-hidden="true">
-                <path d="m1.5 1.5 4.5 4 4.5-4" />
-              </svg>
+              <span class="tiny-chevron" data-icon="chevron-down"></span>
             </button>
             <p id="stats-line" class="stats-line"></p>
           </div>
-          <button id="settings-button" class="settings-button" type="button" aria-label="Settings" aria-haspopup="menu" aria-expanded="false">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.03-.66-.08-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.2 7.2 0 0 0-1.69-.98l-.38-2.65A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.49.49 0 0 0 .12.64l2.11 1.65c-.04.32-.08.66-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.38.31.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z" />
-            </svg>
+          <div class="header-actions">
+          <button id="overview-button" class="settings-button" type="button" aria-label="Habits not done in a while" title="Habits not done in a while">
+            <span data-icon="clock"></span>
           </button>
+          <button id="settings-button" class="settings-button" type="button" aria-label="Settings" aria-haspopup="menu" aria-expanded="false">
+            <span data-icon="settings"></span>
+          </button>
+          </div>
         </div>
 
         <nav id="habit-picker" class="habit-picker" aria-label="Habits"></nav>
@@ -48,6 +49,13 @@
 
       <section id="calendar-scroll" class="calendar-scroll" aria-label="Year calendar">
         <div id="calendar-grid" class="calendar-grid"></div>
+      </section>
+
+      <section id="overview-page" class="overview-page" aria-labelledby="overview-title" hidden>
+        <button id="overview-back" class="habit-pill" type="button"><span data-icon="arrow-left"></span>Calendar</button>
+        <h1 id="overview-title" tabindex="-1">Not done in a while</h1>
+        <p class="overview-copy">Good habits, longest ago first. Never-done habits appear at the top.</p>
+        <ol id="overview-list" class="overview-list"></ol>
       </section>
 
       <div id="popover-layer" class="popover-layer" hidden></div>

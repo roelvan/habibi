@@ -66,7 +66,9 @@ test("web export remains Swift JSONDecoder compatible", () => {
   const raw = JSON.parse(encoded);
   assert.ok(Array.isArray(raw.counts));
   assert.equal(raw.counts.length, 4);
-  assert.deepEqual(decodeBackup(encoded, 2026), state);
+  assert.deepEqual(decodeBackup(encoded, 2026), {
+    ...state, habits: state.habits.map((habit) => ({ ...habit, type: "good" })),
+  });
 });
 
 test("increment, clear, habit selection, and year selection are isolated", () => {
@@ -179,4 +181,42 @@ test("invalid imports fail without producing partial state", () => {
       ),
     BackupError,
   );
+});
+
+
+test("habit types default to good and survive backup round trips", () => {
+  const model = new HabitTrackerModel({ now: JUL_13_2026 });
+  assert.ok(model.habits.every((habit) => habit.type === "good"));
+  const good = model.addHabit("Read");
+  const bad = model.addHabit("Smoke", "bad");
+  assert.equal(good.type, "good");
+  assert.equal(bad.type, "bad");
+  assert.equal(model.setHabitType(good.id, "bad"), true);
+  const restored = HabitTrackerModel.fromBackup(model.toBackupJSON());
+  assert.equal(restored.habits.find((habit) => habit.id === good.id).type, "bad");
+  assert.equal(model.setHabitType(good.id, "unknown"), false);
+  const raw = JSON.parse(model.toBackupJSON());
+  raw.habits[0].type = "unknown";
+  assert.throws(() => decodeBackup(JSON.stringify(raw)), BackupError);
+});
+
+test("overview excludes bad habits, puts never first, and considers all past years", () => {
+  const model = new HabitTrackerModel({ now: new Date(2026, 0, 2, 12) });
+  model.state.habits = [];
+  const today = model.addHabit("Today");
+  model.increment(1);
+  const old = model.addHabit("Old");
+  model.state.counts[old.id] = { 2024: { 365: 1 }, 2027: { 0: 1 } };
+  const never = model.addHabit("Never");
+  model.increment(2); // A future completion does not count as last done.
+  model.addHabit("Bad", "bad");
+  const active = model.activeHabitID;
+  assert.deepEqual(model.neglectedHabits().map(({ id, daysAgo }) => ({ id, daysAgo })), [
+    { id: never.id, daysAgo: null },
+    { id: old.id, daysAgo: 367 },
+    { id: today.id, daysAgo: 0 },
+  ]);
+  assert.equal(model.activeHabitID, active);
+  model.setHabitType(old.id, "bad");
+  assert.equal(model.neglectedHabits().length, 2);
 });

@@ -112,12 +112,13 @@ function parseHabits(value) {
       !UUID_PATTERN.test(habit.id) ||
       typeof habit.name !== "string" ||
       !habit.name.trim() ||
-      ids.has(habit.id)
+      ids.has(habit.id) ||
+      (habit.type !== undefined && !["good", "bad"].includes(habit.type))
     ) {
       throw new BackupError();
     }
     ids.add(habit.id);
-    return { id: habit.id, name: habit.name.trim() };
+    return { id: habit.id, name: habit.name.trim(), type: habit.type ?? "good" };
   });
 }
 
@@ -222,7 +223,7 @@ export function encodeBackup(state) {
   }
 
   return JSON.stringify({
-    habits: state.habits.map(({ id, name }) => ({ id, name })),
+    habits: state.habits.map(({ id, name, type = "good" }) => ({ id, name, type })),
     counts: swiftCounts,
     activeHabitID: state.activeHabitID,
     years: [...state.years],
@@ -245,6 +246,7 @@ export class HabitTrackerModel {
         activeHabitID: null,
         years: [this.currentYear],
       };
+    for (const habit of this.state.habits) habit.type ??= "good";
     this.state.activeHabitID ??= this.state.habits[0].id;
     this.year = this.currentYear;
     this.layout = createYearLayout(this.year);
@@ -356,10 +358,10 @@ export class HabitTrackerModel {
     return next;
   }
 
-  addHabit(name) {
+  addHabit(name, type = "good") {
     const trimmed = name.trim();
-    if (!trimmed) return null;
-    const habit = { id: createUUID(), name: trimmed };
+    if (!trimmed || !["good", "bad"].includes(type)) return null;
+    const habit = { id: createUUID(), name: trimmed, type };
     this.habits.push(habit);
     this.state.activeHabitID = habit.id;
     return habit;
@@ -389,8 +391,27 @@ export class HabitTrackerModel {
     return this.year === this.currentYear ? this.currentDayIndex : null;
   }
 
-  stats() {
-    const habitYears = this.state.counts[this.activeHabitID] ?? {};
+  setHabitType(id, type) {
+    const habit = this.habits.find((candidate) => candidate.id === id);
+    if (!habit || !["good", "bad"].includes(type)) return false;
+    habit.type = type;
+    return true;
+  }
+
+  neglectedHabits() {
+    return this.habits
+      .filter((habit) => habit.type === "good")
+      .map((habit) => ({ ...habit, daysAgo: this.stats(habit.id).lastDoneDaysAgo }))
+      .sort((a, b) => {
+        if (a.daysAgo === b.daysAgo) return a.name.localeCompare(b.name);
+        if (a.daysAgo === null) return -1;
+        if (b.daysAgo === null) return 1;
+        return b.daysAgo - a.daysAgo;
+      });
+  }
+
+  stats(habitID = this.activeHabitID) {
+    const habitYears = this.state.counts[habitID] ?? {};
     const currentDays = habitYears[this.currentYear] ?? {};
     const completions = Object.entries(currentDays)
       .map(([day, count]) => ({ day: Number(day), count }))
