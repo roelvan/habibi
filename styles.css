@@ -348,6 +348,11 @@ button {
   background: var(--cell-weekend);
 }
 
+.day-cell.alternate-month {
+  --cell: #e5d8c5;
+  --cell-weekend: #dccbb2;
+}
+
 .day-cell.done {
   background: var(--accent);
 }

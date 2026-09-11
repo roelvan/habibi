@@ -541,6 +541,7 @@ class HabibiApp {
 
         const cell = document.createElement("div");
         cell.className = "day-cell";
+        if (this.model.layout.monthForDay(day) % 2 === 1) cell.classList.add("alternate-month");
         if (column >= 5) cell.classList.add("weekend");
         if (day === today) cell.classList.add("today");
         cell.dataset.day = String(day);
